@@ -29,7 +29,7 @@ UKF::UKF() {
         0, 0, 1, 0, 0,
         0, 0, 0, 1, 0,
         0, 0, 0, 0, 1;
-
+  //P Value from udacity lessons
   //  P_ <<  0.0043,   -0.0013,    0.0030,   -0.0022,   -0.0020,
   //         -0.0013,    0.0077,    0.0011,    0.0071,    0.0060,
   //         0.0030,    0.0011,    0.0054,    0.0007,    0.0008,
@@ -37,10 +37,12 @@ UKF::UKF() {
   //         -0.0020,    0.0060,    0.0008,    0.0100,    0.0123;
 
   // Process noise standard deviation longitudinal acceleration in m/s^2
-  std_a_ = 2;
+  std_a_ = 4.5;
+  //std_a_ = 0.26;
 
   // Process noise standard deviation yaw acceleration in rad/s^2
-  std_yawdd_ = 0.5;
+  //std_yawdd_ = 0.7;
+  std_yawdd_ = 0.39;
   
   //DO NOT MODIFY measurement noise values below these are provided by the sensor manufacturer.
   // Laser measurement noise standard deviation position1 in m
@@ -119,9 +121,13 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
       float px = rho * cos(phi);
       float py = rho * sin(phi);
       //TODO:Tune the state initialization.
+      //float v = 0.0198;
+      //float yaw = 0.000345566;
+      //float yaw_rate = 0.01382155;
       float v = 0;
       float yaw = 0;
       float yaw_rate = 0;
+
       x_ << px,py,v,yaw,yaw_rate;
       // cout << "First RADAR " << endl;
 
@@ -166,11 +172,6 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
   // print the output
   //cout << "x_ = " << x_ << endl;
   //cout << "P_ = " << P_ << endl;
-
-
-
-
-  //End of ProcessMeasureFunction
 }
 
 /**
@@ -197,9 +198,6 @@ void UKF::Prediction(double delta_t) {
     Xsig.col(i+1)     = x_ + sqrt(lambda_+n_x_) * A.col(i);
     Xsig.col(i+1+n_x_) = x_ - sqrt(lambda_+n_x_) * A.col(i);
   }
-
-  //set measurement dimension, radar can measure r, phi, and r_dot
-
 
   VectorXd x_aug = VectorXd(7);
 // cout << "create augmented state covariance" << endl;
@@ -300,7 +298,6 @@ void UKF::Prediction(double delta_t) {
 // cout << "predicted state mean" << endl;
 
   //predicted state mean
-  //If not working replace x_ and P_ with x_pred and P_pred
   x_.fill(0.0);
   for (int i = 0; i < 2 * n_aug_ + 1; i++) {  //iterate over sigma points
     x_ = x_+ weights_(i) * Xsig_pred_.col(i);
@@ -364,8 +361,8 @@ void UKF::UpdateLidarOld(MeasurementPackage meas_package) {
 	MatrixXd I = MatrixXd::Identity(x_size, x_size);
 	P_ = (I - K * H_) * P_;
 
-  float eta = y.transpose()*S.inverse()*y;
-  cout<<"NIS : "<<eta<<endl;
+  float NIS_Lidar = y.transpose()*S.inverse()*y;
+  //cout<<"NIS : "<<eta<<endl;
 }
 
 void UKF::UpdateLidar(MeasurementPackage meas_package) {
@@ -471,8 +468,8 @@ void UKF::UpdateLidar(MeasurementPackage meas_package) {
   P_ = P_ - K*S*K.transpose();
 
 
-  float eta = z_diff.transpose()*S.inverse()*z_diff;
-  cout<<"NIS : "<<eta<<endl;
+  float NIS_Lidar = z_diff.transpose()*S.inverse()*z_diff;
+  //cout<<"NIS : "<<eta<<endl;
 }
 
 /**
@@ -586,7 +583,7 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
   P_ = P_ - K*S*K.transpose();
 
   //Calculate NIS for LIDAR:
-  float eta = z_diff.transpose()*S.inverse()*z_diff;
-  cout<<"NIS : "<<eta<<endl;
+  float NIS_Radar = z_diff.transpose()*S.inverse()*z_diff;
+  //cout<<"NIS : "<<eta<<endl;
  
 }
